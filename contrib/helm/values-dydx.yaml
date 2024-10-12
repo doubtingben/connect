@@ -1,0 +1,3 @@
+env:
+  MARKET_MAP_ENDPOINT: "dydx-grpc.polkachu.com:23890"
+  MARKETMAP_PROVIDER: "dydx_api"

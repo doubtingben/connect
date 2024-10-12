@@ -1,0 +1,4 @@
+env:
+  MARKET_MAP_ENDPOINT: "neutron-api.polkachu.com:443"
+  MARKETMAP_PROVIDER: "marketmap_api"
+  

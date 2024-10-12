@@ -88,7 +88,26 @@ docker-build:
 	@DOCKER_BUILDKIT=1 $(DOCKER) build -t skip-mev/connect-e2e -f contrib/images/connect.e2e.Dockerfile .
 	@DOCKER_BUILDKIT=1 $(DOCKER) build -t skip-mev/connect-e2e-oracle -f contrib/images/connect.sidecar.prod.Dockerfile .
 
-.PHONY: docker-build
+docker-build-blockchain:
+	@echo "Building blockchain service Docker image..."
+	@DOCKER_BUILDKIT=1 $(DOCKER) build -t skip-mev/connect-blockchain:$(TAG) -f contrib/images/connect.local.Dockerfile .
+
+docker-build-oracle-with-blockchain:
+	@echo "Building oracle with blockchain service Docker image..."
+	@DOCKER_BUILDKIT=1 $(DOCKER) build -t skip-mev/connect-oracle-with-blockchain:$(TAG) -f contrib/images/connect.sidecar.dev.Dockerfile .
+
+docker-load-blockchain: docker-build-blockchain
+	@echo "Loading blockchain service image into kind cluster 'skip-connect'..."
+	@kind load docker-image skip-mev/connect-blockchain:$(TAG) --name skip-connect
+
+docker-load-oracle-with-blockchain: docker-build-oracle-with-blockchain
+	@echo "Loading oracle with blockchain service image into kind cluster 'skip-connect'..."
+	@kind load docker-image skip-mev/connect-oracle-with-blockchain:$(TAG) --name skip-connect
+
+docker-load-all: docker-load-blockchain docker-load-oracle-with-blockchain
+	@echo "All images loaded into kind cluster 'skip-connect'"
+
+.PHONY: docker-build docker-build-blockchain docker-build-oracle-with-blockchain docker-load-blockchain docker-load-oracle-with-blockchain docker-load-all
 
 ###############################################################################
 ###                                Test App                                 ###
