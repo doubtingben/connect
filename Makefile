@@ -92,22 +92,22 @@ docker-build-blockchain:
 	@echo "Building blockchain service Docker image..."
 	@DOCKER_BUILDKIT=1 $(DOCKER) build -t skip-mev/connect-blockchain:$(TAG) -f contrib/images/connect.local.Dockerfile .
 
-docker-build-oracle-with-blockchain:
+docker-build-sidecar:
 	@echo "Building oracle with blockchain service Docker image..."
-	@DOCKER_BUILDKIT=1 $(DOCKER) build -t skip-mev/connect-oracle-with-blockchain:$(TAG) -f contrib/images/connect.sidecar.dev.Dockerfile .
+	@DOCKER_BUILDKIT=1 $(DOCKER) build -t skip-mev/connect-sidecar:$(TAG) -f contrib/images/connect.sidecar.dev.Dockerfile .
 
-docker-load-blockchain: docker-build-blockchain
+kind-load-blockchain: docker-build-blockchain
 	@echo "Loading blockchain service image into kind cluster 'skip-connect'..."
 	@kind load docker-image skip-mev/connect-blockchain:$(TAG) --name skip-connect
 
-docker-load-oracle-with-blockchain: docker-build-oracle-with-blockchain
-	@echo "Loading oracle with blockchain service image into kind cluster 'skip-connect'..."
-	@kind load docker-image skip-mev/connect-oracle-with-blockchain:$(TAG) --name skip-connect
+kind-load-connect-sidecar: docker-build-sidecar
+	@echo "Loading connect sidecar image into kind cluster 'skip-connect'..."
+	@kind load docker-image skip-mev/connect-sidecar:$(TAG) --name skip-connect
 
-docker-load-all: docker-load-blockchain docker-load-oracle-with-blockchain
+kind-load-all: kind-load-blockchain kind-load-connect-sidecar
 	@echo "All images loaded into kind cluster 'skip-connect'"
 
-.PHONY: docker-build docker-build-blockchain docker-build-oracle-with-blockchain docker-load-blockchain docker-load-oracle-with-blockchain docker-load-all
+.PHONY: docker-build docker-build-blockchain docker-build-sidecar kind-load-blockchain kind-load-connect-sidecar kind-load-all
 
 ###############################################################################
 ###                                Test App                                 ###
@@ -366,17 +366,27 @@ k8s-update-grafana-dashboards:
 
 # Deploy new config with Helm
 .PHONY: helm-deploy
-helm-deploy:
+helm-deploy: kind-cluster-create k8s-install-prometheus-operator k8s-update-grafana-dashboards
 	@TAG=$$(git rev-parse --short HEAD)-$$(git diff --quiet || echo "dirty"); \
-	$(MAKE) docker-load-oracle-with-blockchain; \
+	$(MAKE) kind-load-connect-sidecar; \
 	yq eval -n \
-		".image.repository = \"skip-mev/connect-oracle-with-blockchain\" | \
+		".image.repository = \"skip-mev/connect-sidecar\" | \
 		.image.tag = \"$$TAG\" | \
 		.image.pullPolicy = \"IfNotPresent\"" > contrib/helm/values-$$TAG.yaml; \
 	helm upgrade --install connect-$${TAG} contrib/helm/ -f contrib/helm/values-$$TAG.yaml
 
-# Create a kind cluster named "skip-connect"
-.PHONY: kind-create
-kind-create:
-	@echo "Creating kind cluster 'skip-connect'..."
-	@kind create cluster --name skip-connect
+# Create a kind cluster named "skip-connect" if it doesn't exist
+.PHONY: kind-cluster-create
+kind-cluster-create:
+	@if ! kind get clusters | grep -q "^skip-connect$$"; then \
+		echo "Creating kind cluster 'skip-connect'..."; \
+		kind create cluster --name skip-connect; \
+	else \
+		echo "Kind cluster 'skip-connect' already exists. Continuing..."; \
+	fi
+
+# Delete a kind cluster named "skip-connect"
+.PHONY: kind-cluster-delete
+kind-cluster-delete:
+	@echo "Deleting kind cluster 'skip-connect'..."
+	@kind delete cluster --name skip-connect
