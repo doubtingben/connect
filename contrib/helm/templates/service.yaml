@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-oracle
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: connect-oracle
 spec:
   type: ClusterIP
   selector:
@@ -10,3 +13,6 @@ spec:
   - name: http
     port: {{ .Values.service.port | default 8080 }}
     targetPort: {{ .Values.service.targetPort | default 8080 }}
+  - name: metrics
+    port: {{ .Values.service.metricsPort | default 8002 }}
+    targetPort: {{ .Values.service.metricsTargetPort | default 8002 }}

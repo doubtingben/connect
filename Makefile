@@ -363,3 +363,20 @@ k8s-update-grafana-dashboards:
 	@kubectl apply -k grafana/provisioning/dashboards/
 
 .PHONY: k8s-install-prometheus-operator k8s-update-grafana-dashboards
+
+# Deploy new config with Helm
+.PHONY: helm-deploy
+helm-deploy:
+	@TAG=$$(git rev-parse --short HEAD)-$$(git diff --quiet || echo "dirty"); \
+	$(MAKE) docker-load-oracle-with-blockchain; \
+	yq eval -n \
+		".image.repository = \"skip-mev/connect-oracle-with-blockchain\" | \
+		.image.tag = \"$$TAG\" | \
+		.image.pullPolicy = \"IfNotPresent\"" > contrib/helm/values-$$TAG.yaml; \
+	helm upgrade --install connect-$${TAG} contrib/helm/ -f contrib/helm/values-$$TAG.yaml
+
+# Create a kind cluster named "skip-connect"
+.PHONY: kind-create
+kind-create:
+	@echo "Creating kind cluster 'skip-connect'..."
+	@kind create cluster --name skip-connect
