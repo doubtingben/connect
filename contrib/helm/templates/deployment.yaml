@@ -6,11 +6,13 @@ spec:
   replicas: {{ .Values.replicaCount | default 1 }}
   selector:
     matchLabels:
-      app: oracle
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: connect-oracle
   template:
     metadata:
       labels:
-        app: oracle
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: connect-oracle
     spec:
       containers:
       - name: oracle

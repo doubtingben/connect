@@ -8,7 +8,8 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: oracle
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: connect-oracle
   ports:
   - name: http
     port: {{ .Values.service.port | default 8080 }}
