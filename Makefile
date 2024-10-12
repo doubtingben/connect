@@ -30,7 +30,7 @@ DEV_COMPOSE ?= $(CURDIR)/contrib/compose/docker-compose-dev.yml
 LEVANT_VAR_FILE:=$(shell mktemp -d)/levant.yaml
 NOMAD_FILE_CONNECT:=contrib/nomad/connect.nomad
 
-TAG := $(shell git describe --tags --always --dirty)
+TAG := $$(git rev-parse --short HEAD)$$(git diff --quiet || echo "-dirty")
 
 export HOMEDIR := $(HOMEDIR)
 export APP_TOML := $(APP_TOML)
@@ -367,7 +367,7 @@ k8s-update-grafana-dashboards:
 # Deploy new config with Helm
 .PHONY: helm-deploy
 helm-deploy: kind-cluster-create k8s-install-prometheus-operator k8s-update-grafana-dashboards
-	@TAG=$$(git rev-parse --short HEAD)-$$(git diff --quiet || echo "dirty"); \
+	@TAG=$$(git rev-parse --short HEAD)$$(git diff --quiet || echo "-dirty"); \
 	$(MAKE) kind-load-connect-sidecar; \
 	yq eval -n \
 		".image.repository = \"skip-mev/connect-sidecar\" | \
