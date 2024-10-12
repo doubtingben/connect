@@ -1,0 +1,14 @@
+namespace: monitoring
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: connect-grafana-dashboards
+    files:
+      - chain-dashboard.json
+      - side-car-dashboard.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+

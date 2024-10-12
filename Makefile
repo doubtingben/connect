@@ -341,3 +341,25 @@ docs:
 		echo "Mintlify not found. Install at https://mintlify.com/docs/quickstart"; \
 	fi
 .PHONY: docs
+
+k8s-install-prometheus-operator:
+	@echo "Installing Prometheus Operator, Prometheus, and Grafana..."
+	@kubectl create namespace monitoring || true
+	@helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	@helm repo update
+	@helm upgrade --install local prometheus-community/kube-prometheus-stack \
+		--namespace monitoring \
+		--set prometheus.enabled=true \
+		--set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+		--set grafana.enabled=true \
+		--set grafana.adminPassword=admin \
+		--set nodeExporter.enabled=false \
+		--set grafana.sidecar.dashboards.enabled=true \
+		--set grafana.sidecar.dashboards.label=grafana_dashboard \
+		--set grafana.sidecar.dashboards.searchNamespace=ALL
+
+k8s-update-grafana-dashboards:
+	@echo "Updating Grafana dashboard config maps..."
+	@kubectl apply -k grafana/provisioning/dashboards/
+
+.PHONY: k8s-install-prometheus-operator k8s-update-grafana-dashboards
