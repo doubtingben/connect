@@ -8,6 +8,7 @@ configMapGenerator:
     files:
       - chain-dashboard.json
       - side-car-dashboard.json
+      - side-car-basic-dashboard.json
     options:
       labels:
         grafana_dashboard: "1"
