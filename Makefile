@@ -375,6 +375,23 @@ helm-deploy: kind-cluster-create k8s-install-prometheus-operator k8s-update-graf
 		.image.pullPolicy = \"IfNotPresent\"" > contrib/helm/values-$$TAG.yaml; \
 	helm upgrade --install connect-$${TAG} contrib/helm/ -f contrib/helm/values-$$TAG.yaml
 
+# Deploy new config with Helm for dYdX
+.PHONY: helm-deploy-dydx
+helm-deploy-dydx: kind-cluster-create k8s-install-prometheus-operator k8s-update-grafana-dashboards
+	@TAG=$$(git rev-parse --short HEAD)$$(git diff --quiet || echo "-dirty"); \
+	$(MAKE) kind-load-connect-sidecar; \
+	yq eval -n \
+		".image.repository = \"skip-mev/connect-sidecar\" | \
+		.image.tag = \"$$TAG\" | \
+		.image.pullPolicy = \"IfNotPresent\"" > contrib/helm/values-$$TAG.yaml; \
+	helm upgrade --install connect-dydx-$${TAG} contrib/helm/ -f contrib/helm/values-$$TAG.yaml -f contrib/helm/values-dydx.yaml
+
+# Deploy new helm release from provided values file
+.PHONY: helm-deploy-custom
+helm-deploy-custom: kind-cluster-create k8s-install-prometheus-operator k8s-update-grafana-dashboards
+	@SLUG=$$(basename $$VALUES_FILE .yaml | sed 's/^values-//'); \
+	helm upgrade --install connect-$${SLUG} contrib/helm/ -f $$VALUES_FILE
+
 # Create a kind cluster named "skip-connect" if it doesn't exist
 .PHONY: kind-cluster-create
 kind-cluster-create:
