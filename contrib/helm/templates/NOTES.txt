@@ -1,5 +1,5 @@
-1. Check the status of the oracle pod:
+1. Check the status of the oracle pod deployments:
   kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name=connect-oracle"
 
-2. Check the logs of the oracle pod:
-  kubectl logs -f -n {{ .Release.Namespace }} -l "app.kubernetes.io/name=connect-oracle"
+2. Check the logs of this oracle pod:
+  kubectl logs -f -n {{ .Release.Namespace }} -l "app.kubernetes.io/instance={{ .Release.Name }}"
