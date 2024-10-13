@@ -1,0 +1,7 @@
+image:
+  repository: doubtingben/connect-test@sha256
+  tag: 5ce38b8155ad500b5a182c5d915925771df209ab84578e2b530d5e373d8aa205
+  pullPolicy: IfNotPresent
+env:
+  MARKET_MAP_ENDPOINT: "neutron-api.polkachu.com:443"
+  MARKETMAP_PROVIDER: "marketmap_api"
