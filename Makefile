@@ -387,6 +387,7 @@ helm-deploy-dydx: kind-cluster-create k8s-install-prometheus-operator k8s-update
 	helm upgrade --install connect-dydx-$${TAG} contrib/helm/ -f contrib/helm/values-$$TAG.yaml -f contrib/helm/values-dydx.yaml
 
 # Deploy new helm release from provided values file
+# Example: make helm-deploy-custom VALUES_FILE=./contrib/helm/values-doubtingben.yaml
 .PHONY: helm-deploy-custom
 helm-deploy-custom: kind-cluster-create k8s-install-prometheus-operator k8s-update-grafana-dashboards
 	@SLUG=$$(basename $$VALUES_FILE .yaml | sed 's/^values-//'); \
@@ -407,3 +408,9 @@ kind-cluster-create:
 kind-cluster-delete:
 	@echo "Deleting kind cluster 'skip-connect'..."
 	@kind delete cluster --name skip-connect
+
+# Port-forward Grafana service
+.PHONY: k8s-port-forward-grafana
+k8s-port-forward-grafana:
+	@echo "Port-forwarding Grafana service to localhost:8081..."
+	@kubectl port-forward -n monitoring svc/local-grafana 8081:80
