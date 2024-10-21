@@ -14,6 +14,28 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/name: connect-oracle
     spec:
+      initContainers:
+      - name: market-generator
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        command: ["/usr/local/bin/scripts"]
+        args:
+        - "--use-core=$(USE_CORE_MARKETS)"
+        - "--use-raydium=$(USE_RAYDIUM_MARKETS)"
+        - "--use-uniswapv3-base=$(USE_UNISWAPV3_BASE_MARKETS)"
+        - "--use-coingecko=$(USE_COINGECKO_MARKETS)"
+        - "--use-coinmarketcap=$(USE_COINMARKETCAP_MARKETS)"
+        - "--use-osmosis=$(USE_OSMOSIS_MARKETS)"
+        - "--use-polymarket=$(USE_POLYMARKET_MARKETS)"
+        - "--temp-file=/data/markets.json"
+        env:
+        {{- range $key, $value := .Values.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        volumeMounts:
+        - name: markets-data
+          mountPath: /data
       containers:
       - name: oracle
         image: {{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}
@@ -24,11 +46,15 @@ spec:
         - "--host=$(HOST)"
         - "--log-file=/dev/null"
         - "--log-std-out-level=$(LOG_STD_OUT_LEVEL)"
-        {{- if .Values.env.MARKET_CONFIG_PATH }}
+        {{- if and .Values.env.MARKET_CONFIG_PATH (ne .Values.env.MARKET_CONFIG_PATH "") }}
         - "--market-config-path=$(MARKET_CONFIG_PATH)"
         {{- end }}
+        {{- if and .Values.env.MARKET_MAP_ENDPOINT (ne .Values.env.MARKET_MAP_ENDPOINT "") }}
         - "--market-map-endpoint=$(MARKET_MAP_ENDPOINT)"
+        {{- end }}
+        {{- if and .Values.env.MARKETMAP_PROVIDER (ne .Values.env.MARKETMAP_PROVIDER "") }}
         - "--marketmap-provider=$(MARKETMAP_PROVIDER)"
+        {{- end }}
         - "--max-price-age=$(MAX_PRICE_AGE)"
         - "--metrics-enabled=$(METRICS_ENABLED)"
         - "--metrics-prometheus-address=$(METRICS_PROMETHEUS_ADDRESS)"
@@ -38,7 +64,9 @@ spec:
         - "--pprof-port=$(PPROF_PORT)"
         - "--run-pprof=$(RUN_PPROF)"
         - "--update-interval=$(UPDATE_INTERVAL)"
+        {{- if and .Values.env.UPDATE_MARKET_CONFIG_PATH (ne .Values.env.UPDATE_MARKET_CONFIG_PATH "") }}
         - "--update-market-config-path=$(UPDATE_MARKET_CONFIG_PATH)"
+        {{- end }}
         - "--validation-period=$(VALIDATION_PERIOD)"
         env:
         {{- range $key, $value := .Values.env }}
@@ -58,3 +86,9 @@ spec:
           {{- toYaml .Values.livenessProbe | nindent 10 }}
         readinessProbe:
           {{- toYaml .Values.readinessProbe | nindent 10 }}
+        volumeMounts:
+        - name: markets-data
+          mountPath: /data
+      volumes:
+      - name: markets-data
+        emptyDir: {}
