@@ -4,5 +4,5 @@ image:
   pullPolicy: IfNotPresent
 env:
   MARKETMAP_PROVIDER: "dydx_api"
-  MARKET_CONFIG_PATH: "/data/markets.json"
+  USE_MARKET_CONFIG: "true"
   USE_CORE_MARKETS: "true"

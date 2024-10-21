@@ -46,8 +46,8 @@ spec:
         - "--host=$(HOST)"
         - "--log-file=/dev/null"
         - "--log-std-out-level=$(LOG_STD_OUT_LEVEL)"
-        {{- if and .Values.env.MARKET_CONFIG_PATH (ne .Values.env.MARKET_CONFIG_PATH "") }}
-        - "--market-config-path=$(MARKET_CONFIG_PATH)"
+        {{- if and .Values.env.USE_MARKET_CONFIG (ne .Values.env.USE_MARKET_CONFIG "") }}
+        - "--market-config-path=/data/markets.json"
         {{- end }}
         {{- if and .Values.env.MARKET_MAP_ENDPOINT (ne .Values.env.MARKET_MAP_ENDPOINT "") }}
         - "--market-map-endpoint=$(MARKET_MAP_ENDPOINT)"
